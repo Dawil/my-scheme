@@ -3,13 +3,23 @@ import System.Environment
 import Text.ParserCombinators.Parsec
 
 main :: IO ()
-main = do
-	args <- getArgs
-	putStrLn (readExpr (head args))
+main = getArgs >>= print . eval . readExpr . head
 	
+eval :: LispValue -> LispValue
+eval val@(String _) = val
+eval val@(Number _) = val
+eval val@(Bool _) = val
+eval (List [Atom "quote", val]) = val
 
-myParser :: Parser LispValue
-myParser = parseString <|> parseAtom 
+parseExpr :: Parser LispValue
+parseExpr = parseString
+        <|> parseNumber
+        <|> parseAtom
+        <|> parseQuoted
+        <|> do char '('
+               x <- try (parseList <|> parseDottedList)
+               char ')'
+               return x
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
@@ -32,10 +42,23 @@ parseAtom = do first <- letter <|> symbol
 parseNumber :: Parser LispValue
 parseNumber = liftM (Number . read) $ many1 digit
 
-readExpr :: String -> String
-readExpr input = case parse myParser "lisp" input of
-  Left err -> "No match: " ++ show err
-  Right val -> "Found value: " ++ show val
+parseList :: Parser LispValue
+parseList = liftM List $ parseExpr `sepBy` spaces
+
+parseDottedList :: Parser LispValue
+parseDottedList = do head <- endBy parseExpr spaces
+                     tail <- char '.' >> spaces >> parseExpr
+                     return $ DottedList head tail
+
+parseQuoted :: Parser LispValue
+parseQuoted = do char '\''
+                 x <- parseExpr
+                 return $ List [Atom "quote", x]
+
+readExpr :: String -> LispValue
+readExpr input = case parse parseExpr "lisp" input of
+  Left err -> String $ "No match: " ++ show err
+  Right val -> val
 
 data LispValue = Atom String
   | List [LispValue]
