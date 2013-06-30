@@ -1,3 +1,5 @@
+module Main where 
+
 import Control.Monad
 import System.Environment
 import Text.ParserCombinators.Parsec
@@ -10,6 +12,27 @@ eval val@(String _) = val
 eval val@(Number _) = val
 eval val@(Bool _) = val
 eval (List [Atom "quote", val]) = val
+eval (List (Atom func : args)) = apply func $ map eval args
+
+apply :: String -> [LispValue] -> LispValue
+apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+
+primitives :: [(String, [LispValue]-> LispValue)]
+primitives = [ (        "+", numericBinOp (+)  )
+             , (        "-", numericBinOp (-)  )
+             , (        "*", numericBinOp (*)  )
+             , (        "/", numericBinOp div  )
+             , (      "mod", numericBinOp mod  )
+             , ( "quotient", numericBinOp quot )
+             , ("remainder", numericBinOp rem  )
+             ]
+
+numericBinOp :: (Integer -> Integer -> Integer) -> [LispValue] -> LispValue
+numericBinOp op params = Number $ foldl1 op $ map unpackNum params
+
+unpackNum :: LispValue -> Integer
+unpackNum (Number n) = n
+unpackNum _ = 0
 
 parseExpr :: Parser LispValue
 parseExpr = parseString
