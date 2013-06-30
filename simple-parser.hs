@@ -2,19 +2,14 @@ module Main where
 
 import Control.Monad
 import System.Environment
-import System.Exit
 import Text.ParserCombinators.Parsec
 
 main :: IO ()
 main = getArgs >>= print . eval . readExpr . head
 
 runPrompt :: IO ()
-runPrompt = forever $ do
-              putStr ">> "
-              line <- getLine
-              case line of
-                "(quit)" -> exitSuccess
-                val      -> putStrLn . ("=> " ++) . show . eval . readExpr $ val
+runPrompt = forever $ 
+  putStr ">> " >> getLine >>= putStrLn . ("=> " ++) . show . eval . readExpr
 	
 eval :: LispValue -> LispValue
 eval val@(String _) = val
