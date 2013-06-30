@@ -34,6 +34,15 @@ primitives = [ (        "+", numericBinOp (+)  )
              , (      "mod", numericBinOp mod  )
              , ( "quotient", numericBinOp quot )
              , ("remainder", numericBinOp rem  )
+             , (  "number?", \val -> case val of
+                               [Number _] -> Bool True
+                               _          -> Bool False)
+             , (  "string?", \val -> case val of
+                               [String _] -> Bool True
+                               _          -> Bool False)
+             , (  "symbol?", \val -> case val of
+                               [Atom _]   -> Bool True
+                               _          -> Bool False)
              ]
 
 numericBinOp :: (Integer -> Integer -> Integer) -> [LispValue] -> LispValue
