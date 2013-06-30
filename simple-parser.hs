@@ -9,12 +9,12 @@ main :: IO ()
 main = getArgs >>= print . eval . readExpr . head
 
 runPrompt :: IO ()
-runPrompt = do line <- getLine
-               case line of
-                 "(quit)" -> exitSuccess
-                 val      -> do
-                   putStrLn . ("=> " ++) . show . eval . readExpr $ val
-                   runPrompt
+runPrompt = forever $ do
+              putStr ">> "
+              line <- getLine
+              case line of
+                "(quit)" -> exitSuccess
+                val      -> putStrLn . ("=> " ++) . show . eval . readExpr $ val
 	
 eval :: LispValue -> LispValue
 eval val@(String _) = val
